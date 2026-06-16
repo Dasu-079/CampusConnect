@@ -1,0 +1,173 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int            @id @default(autoincrement())
+  username       String         @unique
+  passwordHash   String
+  role           String         // ADMIN, TEACHER, STUDENT
+  isPasswordTemp Boolean        @default(true)
+  isActive       Boolean        @default(true)
+  student        Student?
+  teacher        Teacher?
+  announcements  Announcement[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Student {
+  id          Int          @id @default(autoincrement())
+  regNumber   String       @unique
+  name        String
+  branch      String       // CSE, ECE, EEE, Civil, Mechanical
+  semester    Int          // 1, 2, 3, 4, 5, 6
+  email       String?
+  mobile      String?
+  profilePic  String?      @default("")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int          @unique
+  attendance  Attendance[]
+  results     Result[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Teacher {
+  id              Int              @id @default(autoincrement())
+  facultyId       String           @unique
+  name            String
+  branch          String           // CSE, ECE, EEE, Civil, Mechanical
+  email           String?
+  mobile          String?
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int              @unique
+  teacherSubjects TeacherSubject[]
+  attendance      Attendance[]
+  timetables      Timetable[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String
+  code String @unique // CSE, ECE, EEE, Civil, Mechanical
+}
+
+model Subject {
+  id              Int              @id @default(autoincrement())
+  code            String           @unique
+  name            String
+  branch          String           // CSE, ECE, EEE, Civil, Mechanical
+  semester        Int              // 1 to 6
+  teacherSubjects TeacherSubject[]
+  attendance      Attendance[]
+  results         Result[]
+  timetables      Timetable[]
+  resources       Resource[]
+}
+
+model TeacherSubject {
+  id        Int     @id @default(autoincrement())
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId Int
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId Int
+
+  @@unique([teacherId, subjectId])
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  status    String   // PRESENT, ABSENT
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId Int
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId Int
+}
+
+model Result {
+  id              Int     @id @default(autoincrement())
+  internalMarks   Float   @default(0)
+  assignmentMarks Float   @default(0)
+  labMarks        Float   @default(0)
+  student         Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       Int
+  subject         Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId       Int
+  examSemester    Int
+
+  @@unique([studentId, subjectId])
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  category    String   // Examination, Results, Workshops, Seminars, Technical Events, Holidays, General Notices
+  priority    String   // HIGH, MEDIUM, LOW
+  publishDate DateTime @default(now())
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    Int
+}
+
+model Scholarship {
+  id          Int      @id @default(autoincrement())
+  name        String
+  eligibility String
+  lastDate    DateTime
+  link        String
+  status      String   // ACTIVE, EXPIRED
+}
+
+model Resource {
+  id        Int     @id @default(autoincrement())
+  name      String
+  type      String  // PDF, Video, Website, Book
+  url       String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId Int
+}
+
+model TransportRoute {
+  id            Int    @id @default(autoincrement())
+  routeNumber   String @unique
+  source        String
+  destination   String
+  departureTime String
+  arrivalTime   String
+  stops         String // comma separated
+  busType       String // Pallevelugu, Express, Deluxe
+}
+
+model Classroom {
+  id         Int         @id @default(autoincrement())
+  roomName   String      @unique
+  capacity   Int
+  timetables Timetable[]
+}
+
+model Timetable {
+  id           Int       @id @default(autoincrement())
+  dayOfWeek    String    // MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+  periodNumber Int       // 1 to 6
+  subject      Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId    Int
+  teacher      Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId    Int
+  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId  Int
+  semester     Int       // 1 to 6
+  branch       String    // CSE, ECE, EEE, Civil, Mechanical
+
+  @@unique([dayOfWeek, periodNumber, branch, semester])
+}
