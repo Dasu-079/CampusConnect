@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', apiRouter);
 
 // Serve static assets in production
-const clientDistPath = path.join(__dirname, '../../../client/dist');
+const clientDistPath = path.join(__dirname, '../../client/dist');
 app.use(express.static(clientDistPath));
 
 app.get('*', (req, res, next) => {
