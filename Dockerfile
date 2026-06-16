@@ -8,6 +8,7 @@ RUN npm run build
 
 # Stage 2: Prepare Express Server
 FROM node:20-alpine AS server-builder
+RUN apk add --no-cache openssl
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm install
@@ -16,6 +17,7 @@ RUN npx prisma generate
 
 # Stage 3: Run Application
 FROM node:20-alpine
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY --from=client-builder /app/client/dist ./client/dist
 COPY --from=server-builder /app/server ./server
