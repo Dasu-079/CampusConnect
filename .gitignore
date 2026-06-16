@@ -6,6 +6,8 @@ dist/
 build/
 out/
 
+campusconnect_backup.sql
+
 # Environment variables
 .env
 .env.local
